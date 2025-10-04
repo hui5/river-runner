@@ -22,8 +22,8 @@
     const activeNWISSites = data[2].sites;
     const nameOverrides = {};
     data[3].forEach((d) => {
-      nameOverrides[d['levelpathid']] = {
-        feature_name: d['feature_name']
+      nameOverrides[d["levelpathid"]] = {
+        feature_name: d["feature_name"],
       };
     });
 
@@ -36,15 +36,15 @@
 {:then data}
   <Map
     bounds={[
-      [-125, 24],
-      [-66, 51],
+      [73, 18],
+      [135, 54],
     ]}
     stateBoundaries={data[0]}
     stoppingFeatures={data[1]}
     activeNWISSites={data[2]}
     nameOverrides={data[3]}
     visibleIndex={1}
-    addTopo={false}
+    addTopo={true}
     mapStyle={"mapbox://styles/samlearner/cl0xgv1fo001615l8vwu3xq31"}
     advancedFeaturesOn={false}
   />

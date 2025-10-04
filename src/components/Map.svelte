@@ -117,16 +117,59 @@
     link.href = "https://unpkg.com/mapbox-gl/dist/mapbox-gl.css";
 
     link.onload = () => {
+      // 尝试从localStorage恢复地图状态（除非有URL参数指定的起始位置）
+      const savedState = localStorage.getItem("riverRunnerMapState");
+      let initialState = {
+        center: [104, 35],
+        zoom: windowWidth > mobileBreakpoint ? 2.001 : 1.4001,
+        pitch: 0,
+        bearing: 0,
+      };
+      let hasRestoredState = false;
+
+      // 只有在没有URL参数指定起始位置时才恢复保存的状态
+      if (savedState && !startingSearch) {
+        try {
+          const parsed = JSON.parse(savedState);
+          // 检查保存的状态是否过期（超过7天）
+          const isExpired =
+            parsed.timestamp &&
+            Date.now() - parsed.timestamp > 7 * 24 * 60 * 60 * 1000;
+
+          if (!isExpired) {
+            initialState = {
+              center: parsed.center || [104, 35],
+              zoom:
+                parsed.zoom ||
+                (windowWidth > mobileBreakpoint ? 2.001 : 1.4001),
+              pitch: parsed.pitch || 0,
+              bearing: parsed.bearing || 0,
+            };
+            hasRestoredState = true;
+          }
+        } catch (e) {
+          console.warn("Failed to parse saved map state:", e);
+        }
+      }
+
       map = new mapbox.Map({
         container,
         style: mapStyle || "mapbox://styles/mapbox/light-v10",
-        center: [0, 0],
+        center: initialState.center,
+        zoom: initialState.zoom,
+        pitch: initialState.pitch,
+        bearing: initialState.bearing,
         minZoom: windowWidth > mobileBreakpoint ? 2 : 1.4,
-        zoom: windowWidth > mobileBreakpoint ? 2.001 : 1.4001,
         projection: "globe",
+        language: "zh-Hans", // 简体中文
+        hash: true,
       });
 
-      map.fitBounds(bounds, { animate: false, padding: 10 });
+      // 只有在没有恢复保存状态且没有URL参数时才使用默认边界
+      if (!hasRestoredState && !startingSearch) {
+        map.fitBounds(bounds, { animate: false, padding: 10 });
+      }
+
       if (startingSearch) {
         map.jumpTo({
           center: startingSearch.lngLat,
@@ -154,6 +197,9 @@
 
         // Add geocoder search bar to search for location/address instead of clicking
         geocoder = initGeocoder({ map });
+
+        // 设置地图状态保存功能
+        setupMapStateSaving();
 
         // Initialize and add explicit zoom controls in top-left corner, if not on mobile
         const nav = new mapbox.NavigationControl({
@@ -188,11 +234,47 @@
     };
   });
 
+  const setupMapStateSaving = () => {
+    // 保存地图状态的函数
+    const saveMapState = () => {
+      const mapState = {
+        center: map.getCenter(),
+        zoom: map.getZoom(),
+        pitch: map.getPitch(),
+        bearing: map.getBearing(),
+        timestamp: Date.now(),
+      };
+
+      try {
+        localStorage.setItem("riverRunnerMapState", JSON.stringify(mapState));
+      } catch (e) {
+        console.warn("Failed to save map state:", e);
+      }
+    };
+
+    // 防抖保存，避免频繁写入localStorage
+    let saveTimeout;
+    const debouncedSave = () => {
+      clearTimeout(saveTimeout);
+      saveTimeout = setTimeout(saveMapState, 500);
+    };
+
+    // 监听地图状态变化事件
+    map.on("moveend", debouncedSave);
+    map.on("zoomend", debouncedSave);
+    map.on("pitchend", debouncedSave);
+    map.on("rotateend", debouncedSave);
+
+    // 页面卸载时保存状态
+    window.addEventListener("beforeunload", saveMapState);
+  };
+
   const initGeocoder = ({ map }) => {
     const geocoderControl = new MapboxGeocoder({
       accessToken: mapboxAccessToken,
       mapboxgl: mapbox,
-      placeholder: "Search for any location",
+      placeholder: "搜索任何位置",
+      language: "zh-CN",
       marker: false,
       flyTo: false,
     });
@@ -1208,8 +1290,8 @@
   {/if}
 </div>
 
-<Prompt {vizState} {errorStatus} {currentLocation} />
-<ContactBox {vizState} />
+<!-- <Prompt {vizState} {errorStatus} {currentLocation} /> -->
+<!-- <ContactBox {vizState} /> -->
 
 <div
   class="left-column"

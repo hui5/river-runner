@@ -35,7 +35,9 @@ export const getElevationsMapQuery = (coordinatePath, map, arrayStep = 10) => {
     return index % arrayStep === 0;
   });
 
-  return elevationCoordinates.map((d) => map.queryTerrainElevation(d, { exaggerated: true }));
+  return elevationCoordinates.map((d) =>
+    map.queryTerrainElevation(d, { exaggerated: true })
+  );
 };
 
 export const addFeatureExtrusions = ({
@@ -85,8 +87,12 @@ export const addFeatureExtrusions = ({
 
   map.on("click", layerID, (e) => {
     if (
-      (layerID === "wqp-points" || layerID === "wade-points" || layerID === "ca-gage-points") &&
-      map.queryRenderedFeatures(e.point).some((feature) => feature.source === "nwis-points")
+      (layerID === "wqp-points" ||
+        layerID === "wade-points" ||
+        layerID === "ca-gage-points") &&
+      map
+        .queryRenderedFeatures(e.point)
+        .some((feature) => feature.source === "nwis-points")
     ) {
       return;
     }

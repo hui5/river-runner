@@ -108,6 +108,7 @@
         zoom: 9,
         interactive: false,
         attributionControl: false,
+        language: "zh-Hans",
         // pitch: 85,
         // bearing: 80,
       });
@@ -473,8 +474,8 @@
   style="z-index: {visibleIndex ? 10 : -10}; opacity: {!visibleIndex
     ? 0.0
     : width > 700
-    ? 0.9
-    : 1.0};"
+      ? 0.9
+      : 1.0};"
   bind:this={markerEl}
 />
 
