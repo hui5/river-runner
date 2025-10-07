@@ -3,6 +3,7 @@ on:
   # push:
   #   branches:
   #     - main
+  workflow_dispatch: # 添加这个可以手动触发
   schedule:
     - cron: "0 0 * * 0" # runs at 00:00 UTC, once weekly
 permissions:
